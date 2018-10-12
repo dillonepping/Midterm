@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Midterm - Epping, Dillon</title>
+
+        <h1>GES 387 - Midterm</h1>
+
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css"
+        integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+        crossorigin=""/>
+
+        <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"
+        integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA=="
+        crossorigin=""></script>
+
+        <script type="text/javascript" src="states.js"></script>
+        <script type="text/javascript" src="counties.js"></script>
+
+        <style type="text/css">
+          html, body { margin: 0; padding: 0; height: 100%; }
+          #map { min-height: 100%; }
+
+
+          /* Optional: adjust the values below to change the appearance of the legend */
+          .legend {
+              padding: 6px 8px;
+              line-height: 18px;
+              background: rgba(255,255,255,0.9);
+              box-shadow: 0 0 15px rgba(0,0,0,0.2);
+              border-radius: 5px;
+          }
+
+           /* Optional: adjust the values below to change the appearance of the legend color boxes */
+           .legend i {
+              width: 24px;
+              height: 18px;
+              float: left;
+              margin-right: 8px;
+              opacity: 1;
+          }
+      </style>
+
+    </head>
+
+    <body>
+        <div id="map"></div>
+
+        <script type="text/javascript">
+
+        var map = L.map('map', {
+            center: [35.0,-96.5,],
+            zoom: 4
+        });
+
+         var canvas = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+            attribution: 'Map data © OpenStreetMap contributors, CC-BY-SA, Imagery © Mapbox',
+            maxZoom: 7,
+            minZoom: 4,
+            id: 'mapbox.light',
+            accessToken: 'pk.eyJ1IjoiZGlsbG9uZXBwaW5nIiwiYSI6ImNqbWpwMm0yeTAyNTAzdm9iYmdtaXZsd2IifQ.EFn93YkiIFSleBx6op5S6w'
+          }).addTo(map);
+
+          function getColor(value) {
+              return value < 3.73 ? '#eff3ff':
+                     value < 11 ? '#bdd7e7':
+                     value < 19 ? '#6baed6':
+                     value < 27 ? '#3182bd':
+                     value < 35 ? '#08519c':
+                                      '#08519c';}
+
+         function style(feature){
+         return {
+         fillColor: getColor(feature.properties.per_aging),
+         weight: 1.5,
+         opacity: 1,
+         color: 'black',
+         fillOpacity: 1,
+         };
+         }
+
+
+//geojson for PR
+    var states = L.geoJson(states, {style:style}).addTo(map);
+
+    var counties = L.geoJson(counties, {style:style}).addTo(map);
+
+//Legend
+
+         var legend = L.control({position: 'topright'}); // Try the other three corners if you like.
+
+         legend.onAdd = function (map) {
+
+         var div = L.DomUtil.create('div', 'legend'),
+         grades = [3.73, 11, 19, 27, 35]; // The break values to define the intervals of population, note we begin from 0 here
+
+         div.innerHTML = '<b>Percent of <br> Population <br> Over Age 65 <br><br></b>'; // The legend title (HTML-based), in this case it's Population Density 2011
+
+         // Loop through our the classes and generate a label with a color box for each interval.
+         // If you are creating a choropleth map, you DO NOT need to change lines below.
+         for (var i = 0; i < grades.length; i++) {
+         div.innerHTML +=
+         '<i style="background:' + getColor(grades[i] ) + '"></i>' +
+         grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+         }
+
+         return div;
+         };
+
+         legend.addTo(map);
+
+//Layers Control
+  var basemaps = {
+  "Light Canvas": canvas,
+  };
+  var overlaymaps = {
+           "US States": states,
+           "US Counties": counties,
+            };
+
+            L.control.layers(basemaps, overlaymaps).addTo(map);
+
+            // Removing the legend when the layer is removed
+            map.on('overlayremove', function(eventLayer){
+              if (eventLayer.name == "US States"){ // We use the key/display name to refer to the layer
+                map.removeControl(legend); // legend is the variable name of the layer legend
+              }
+            });
+
+            // Adding the legend when the layer is added
+            map.on('overlayadd', function(eventLayer){
+              if (eventLayer.name == "US States"){
+                legend.addTo(map);
+              }
+            });
+
+            // Removing the legend when the layer is removed
+            map.on('overlayremove', function(eventLayer){
+            if (eventLayer.name == "US Counties"){ // We use the key/display name to refer to the layer
+            map.removeControl(legend); // legend is the variable name of the layer legend
+            }
+            });
+
+            // Adding the legend when the layer is added
+            map.on('overlayadd', function(eventLayer){
+            if (eventLayer.name == "US Counties"){
+            legend.addTo(map);
+            }
+            });
+        </script>
+   </body>
+</html>
